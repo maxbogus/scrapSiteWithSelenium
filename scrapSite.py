@@ -77,16 +77,17 @@ def get_data():
 
 def save_img(nasa_id):
     nato_img_src = get_image_src()
-    file = set_file_name(nasa_id, 'image')
-
-    # download the image
-    print(nato_img_src)
     if nato_img_src:
-        resource = urlopen(nato_img_src)
-        if resource:
-            with open(file, 'wb') as f:
-                f.write(resource.read())
-            print('Saved file %s' % file)
+        file = set_file_name(nasa_id, 'image')
+
+        # download the image
+        print(nato_img_src)
+        if nato_img_src:
+            resource = urlopen(nato_img_src)
+            if resource:
+                with open(file, 'wb') as f:
+                    f.write(resource.read())
+                print('Saved file %s' % file)
 
 
 def save_meta_data(data, nasa_id):
@@ -102,8 +103,7 @@ def save_meta_data(data, nasa_id):
 def get_image_src():
     # get the image source
     nato_img = get_element_by_id('details_img')
-    nato_img_src = nato_img.get_attribute('src')
-    return nato_img_src
+    return nato_img.get_attribute('src') if nato_img else None
 
 
 def set_file_name(nasa_id, file_type=None):
