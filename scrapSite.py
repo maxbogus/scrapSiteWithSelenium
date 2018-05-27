@@ -3,42 +3,75 @@ import os
 from urllib.request import urlopen
 from selenium import webdriver
 
-
 my_url = 'https://images.nasa.gov/'
 chromedriver = './chromedriver'
 urls = []
 
 driver = webdriver.Chrome(chromedriver)
-driver.get(my_url)
 
-time.sleep(2)
-p_element = driver.find_element_by_id(id_='landing-assets')
+
+## Selenium helpers
+def get_elements_by_css_locator(locator):
+    result = None
+    try:
+        result = driver.find_elements_by_css_selector(locator)
+    except Exception as exception:
+        print('Cannot find {}. Exception: {}'.format(locator, exception))
+    return result
+
+
+def get_element_by_css_locator(locator):
+    result = None
+    try:
+        result = driver.find_element_by_css_selector(locator)
+    except Exception as exception:
+        print('Cannot find {}. Exception: {}'.format(locator, exception))
+    return result
+
+
+def get_element_by_id(locator):
+    result = None
+    try:
+        result = driver.find_element_by_id(locator)
+    except Exception as exception:
+        print('Cannot find {}. Exception: {}'.format(locator, exception))
+    return result
+
+
+def get_page(page_url):
+    print(page_url)
+    driver.get(page_url)
+    time.sleep(2)
+
+
+get_page(my_url)
+
+p_element = get_element_by_id('landing-assets')
 
 
 def get_data():
-
-    nato_id = driver.find_element_by_css_selector('#detail-metadata span')
-    keywords = driver.find_elements_by_css_selector('#detail-metadata span')
-    location = driver.find_element_by_css_selector('#detail-metadata span')
-    photographer = driver.find_element_by_css_selector('#detail-metadata span')
-    size = driver.find_element_by_css_selector('#detail-metadata span')
-    data_format = driver.find_element_by_css_selector('#detail-metadata span')
-    center = driver.find_element_by_css_selector('#detail-metadata span')
-    created = driver.find_element_by_css_selector('#detail-metadata span')
-    description = driver.find_element_by_css_selector('#detail-metadata span')
-    data_href = driver.find_element_by_css_selector('#detail-metadata span')
+    nato_id = get_element_by_css_locator('#detail-metadata span')
+    keywords = get_elements_by_css_locator('#detail-keywords a')
+    location = get_element_by_css_locator("span[editable-text='media.Location']")
+    photographer = get_element_by_css_locator('span[e-form="editPhotographer"]')
+    size = get_element_by_css_locator("li[ng-If='mediaFileSize'] span")
+    data_format = get_element_by_css_locator('[ng-if="mediaFileExt"] span')
+    center = get_element_by_css_locator('[data-ng-if="media.Center || editAsset === true"] span')
+    created = get_element_by_css_locator("#edit-dateCreated span[e-form='editDateCreated']")
+    description = get_element_by_css_locator('#editDescription')
+    data_href = get_element_by_css_locator('[data-ng-if="media.Center.website"] a')
 
     return {
         'id': nato_id.text if nato_id else '-',
         'keywords': [x.text for x in keywords] if keywords else '-',
-        'location': location if location else '-',
-        'photographer': photographer if photographer else '-',
-        'size': size if size else '-',
-        'data_format': data_format if data_format else '-',
-        'center': center if center else '-',
-        'created': created if created else '-',
-        'description': description if description else '-',
-        'href': data_href if data_href else '-',
+        'location': location.text if location else '-',
+        'photographer': photographer.text if photographer else '-',
+        'size': size.text if size else '-',
+        'data_format': data_format.text if data_format else '-',
+        'center': center.text if center else '-',
+        'created': created.text if created else '-',
+        'description': description.text if description else '-',
+        'href': data_href.get_attribute('href') if data_href else '-',
     }
 
 
@@ -68,9 +101,8 @@ def save_meta_data(data, nasa_id):
 
 def get_image_src():
     # get the image source
-    nato_img = driver.find_element_by_id('details_img')
+    nato_img = get_element_by_id('details_img')
     nato_img_src = nato_img.get_attribute('src')
-    print(nato_img)
     return nato_img_src
 
 
@@ -86,16 +118,14 @@ def set_file_name(nasa_id, file_type=None):
 
 
 if p_element:
-    img_elements = driver.find_elements_by_css_selector('#landing-assets a.recent')
-    print(1)
+    img_elements = get_elements_by_css_locator('#landing-assets a.recent')
+
     for element in img_elements:
         href = element.get_attribute('href')
         urls.append(href)
-        print(href)
 
     for url in urls:
-        driver.get(url)
-        time.sleep(2)
+        get_page(url)
         data = get_data()
 
         if data:
