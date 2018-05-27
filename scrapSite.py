@@ -3,24 +3,6 @@ import os
 from urllib.request import urlopen
 from selenium import webdriver
 
-# Write a python code to get images and meta-data from this page:
-# https://images.nasa.gov/
-#
-# Need "medium" image and all metadata, such as:
-# NASA ID: NHQ201805170022
-# Keywords: DC, Jim Bridenstine, NASA Headquarters, Town Hall, Washington
-# Center: HQ
-# Date Created: 2018-05-17
-# Visit HQ Website
-# NASA Administrator Jim Bridenstine is seen during a NASA town hall event, Thursday, May 17, 2018 at NASA Headquarters in Washington. Photo Credit: (NASA/Bill Ingalls)
-#
-#
-# Write image as {nasa_id}.gif (or .tif or whatever)
-# Write meta data as test to {nasa_id}.txt
-#
-# Don't use the NASA API.
-#
-# Please send the code here when done and tested. Harvest the first page only (no search results). Good luck.
 
 my_url = 'https://images.nasa.gov/'
 chromedriver = './chromedriver'
@@ -34,21 +16,53 @@ p_element = driver.find_element_by_id(id_='landing-assets')
 
 
 def get_data():
-    return {'id': 'VAFB-20180501-PH_RKB04_0038'}
+
+    nato_id = driver.find_element_by_css_selector('#detail-metadata span')
+    keywords = driver.find_elements_by_css_selector('#detail-metadata span')
+    location = driver.find_element_by_css_selector('#detail-metadata span')
+    photographer = driver.find_element_by_css_selector('#detail-metadata span')
+    size = driver.find_element_by_css_selector('#detail-metadata span')
+    data_format = driver.find_element_by_css_selector('#detail-metadata span')
+    center = driver.find_element_by_css_selector('#detail-metadata span')
+    created = driver.find_element_by_css_selector('#detail-metadata span')
+    description = driver.find_element_by_css_selector('#detail-metadata span')
+    data_href = driver.find_element_by_css_selector('#detail-metadata span')
+
+    return {
+        'id': nato_id.text if nato_id else '-',
+        'keywords': [x.text for x in keywords] if keywords else '-',
+        'location': location if location else '-',
+        'photographer': photographer if photographer else '-',
+        'size': size if size else '-',
+        'data_format': data_format if data_format else '-',
+        'center': center if center else '-',
+        'created': created if created else '-',
+        'description': description if description else '-',
+        'href': data_href if data_href else '-',
+    }
 
 
 def save_img(nasa_id):
     nato_img_src = get_image_src()
-    file = set_file_name(nasa_id)
+    file = set_file_name(nasa_id, 'image')
 
     # download the image
     print(nato_img_src)
     if nato_img_src:
         resource = urlopen(nato_img_src)
-        # time.sleep(2)
         if resource:
             with open(file, 'wb') as f:
                 f.write(resource.read())
+            print('Saved file %s' % file)
+
+
+def save_meta_data(data, nasa_id):
+    file = set_file_name(nasa_id)
+    if file:
+        text = '\n'.join("{!s}={!r}".format(k, v) for (k, v) in data.items())
+        if text:
+            with open(file, 'w') as f:
+                print("{}".format(text), file=f)
             print('Saved file %s' % file)
 
 
@@ -57,17 +71,16 @@ def get_image_src():
     nato_img = driver.find_element_by_id('details_img')
     nato_img_src = nato_img.get_attribute('src')
     print(nato_img)
-    print(nato_img_src)
     return nato_img_src
 
 
-def set_file_name(nasa_id):
+def set_file_name(nasa_id, file_type=None):
     # set file name
     dir_name = 'parsedData'
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
     filename = '%s' % nasa_id
-    suffix = '.png'
+    suffix = '.png' if file_type == 'image' else '.txt'
     file = os.path.join(dir_name, filename + suffix)
     return file
 
@@ -85,7 +98,9 @@ if p_element:
         time.sleep(2)
         data = get_data()
 
-        if data['id']:
-            save_img(data['id'])
+        if data:
+            if data['id']:
+                save_meta_data(data, data['id'])
+                save_img(data['id'])
 
 driver.close()
