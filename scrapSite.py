@@ -44,11 +44,6 @@ def get_page(page_url):
     time.sleep(2)
 
 
-get_page(my_url)
-
-p_element = get_element_by_id('landing-assets')
-
-
 def get_data():
     nato_id = get_element_by_css_locator('#detail-metadata span')
     keywords = get_elements_by_css_locator('#detail-keywords a')
@@ -117,20 +112,26 @@ def set_file_name(nasa_id, file_type=None):
     return file
 
 
-if p_element:
-    img_elements = get_elements_by_css_locator('#landing-assets a.recent')
+def parse_nasa_main_page():
+    print('Parsing started.')
+    get_page(my_url)
+    if get_element_by_id('landing-assets'):
+        img_elements = get_elements_by_css_locator('#landing-assets a.recent')
 
-    for element in img_elements:
-        href = element.get_attribute('href')
-        urls.append(href)
+        for element in img_elements:
+            href = element.get_attribute('href')
+            urls.append(href)
 
-    for url in urls:
-        get_page(url)
-        data = get_data()
+        for url in urls:
+            get_page(url)
+            data = get_data()
 
-        if data:
-            if data['id']:
-                save_meta_data(data, data['id'])
-                save_img(data['id'])
+            if data:
+                if data['id']:
+                    save_meta_data(data, data['id'])
+                    save_img(data['id'])
+    print('Parsing complete.')
+    driver.close()
 
-driver.close()
+
+parse_nasa_main_page()
