@@ -10,7 +10,7 @@ urls = []
 driver = webdriver.Chrome(chromedriver)
 
 
-## Selenium helpers
+# Selenium helpers
 def get_elements_by_css_locator(locator):
     result = None
     try:
