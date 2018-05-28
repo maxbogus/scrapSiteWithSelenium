@@ -1,60 +1,21 @@
-import time
 import os
 from urllib.request import urlopen
-from selenium import webdriver
+from seleniumWrapper.client import SeleniumClient
 
-my_url = 'https://images.nasa.gov/'
-chromedriver = './chromedriver'
-urls = []
-
-driver = webdriver.Chrome(chromedriver)
-
-
-# Selenium helpers
-def get_elements_by_css_locator(locator):
-    result = None
-    try:
-        result = driver.find_elements_by_css_selector(locator)
-    except Exception as exception:
-        print('Cannot find {}. Exception: {}'.format(locator, exception))
-    return result
-
-
-def get_element_by_css_locator(locator):
-    result = None
-    try:
-        result = driver.find_element_by_css_selector(locator)
-    except Exception as exception:
-        print('Cannot find {}. Exception: {}'.format(locator, exception))
-    return result
-
-
-def get_element_by_id(locator):
-    result = None
-    try:
-        result = driver.find_element_by_id(locator)
-    except Exception as exception:
-        print('Cannot find {}. Exception: {}'.format(locator, exception))
-    return result
-
-
-def get_page(page_url):
-    print(page_url)
-    driver.get(page_url)
-    time.sleep(2)
+client = SeleniumClient
 
 
 def get_data():
-    nato_id = get_element_by_css_locator('#detail-metadata span')
-    keywords = get_elements_by_css_locator('#detail-keywords a')
-    location = get_element_by_css_locator("span[editable-text='media.Location']")
-    photographer = get_element_by_css_locator('span[e-form="editPhotographer"]')
-    size = get_element_by_css_locator("li[ng-If='mediaFileSize'] span")
-    data_format = get_element_by_css_locator('[ng-if="mediaFileExt"] span')
-    center = get_element_by_css_locator('[data-ng-if="media.Center || editAsset === true"] span')
-    created = get_element_by_css_locator("#edit-dateCreated span[e-form='editDateCreated']")
-    description = get_element_by_css_locator('#editDescription')
-    data_href = get_element_by_css_locator('[data-ng-if="media.Center.website"] a')
+    nato_id = client.get_element_by_css_locator(client, '#detail-metadata span')
+    keywords = client.get_elements_by_css_locator(client, '#detail-keywords a')
+    location = client.get_element_by_css_locator(client, "span[editable-text='media.Location']")
+    photographer = client.get_element_by_css_locator(client, 'span[e-form="editPhotographer"]')
+    size = client.get_element_by_css_locator(client, "li[ng-If='mediaFileSize'] span")
+    data_format = client.get_element_by_css_locator(client, '[ng-if="mediaFileExt"] span')
+    center = client.get_element_by_css_locator(client, '[data-ng-if="media.Center || editAsset === true"] span')
+    created = client.get_element_by_css_locator(client, "#edit-dateCreated span[e-form='editDateCreated']")
+    description = client.get_element_by_css_locator(client, '#editDescription')
+    data_href = client.get_element_by_css_locator(client, '[data-ng-if="media.Center.website"] a')
 
     return {
         'id': nato_id.text if nato_id else '-',
@@ -97,7 +58,7 @@ def save_meta_data(data, nasa_id):
 
 def get_image_src():
     # get the image source
-    nato_img = get_element_by_id('details_img')
+    nato_img = client.get_element_by_id(client, 'details_img')
     return nato_img.get_attribute('src') if nato_img else None
 
 
@@ -113,17 +74,18 @@ def set_file_name(nasa_id, file_type=None):
 
 
 def parse_nasa_main_page():
+    urls = []
     print('Parsing started.')
-    get_page(my_url)
-    if get_element_by_id('landing-assets'):
-        img_elements = get_elements_by_css_locator('#landing-assets a.recent')
+    client.open_nasa_site(client)
+    if client.get_element_by_id(client, 'landing-assets'):
+        img_elements = client.get_elements_by_css_locator(client, '#landing-assets a.recent')
 
         for element in img_elements:
             href = element.get_attribute('href')
             urls.append(href)
 
         for url in urls:
-            get_page(url)
+            client.get_page(client, page_url=url)
             data = get_data()
 
             if data:
@@ -131,7 +93,7 @@ def parse_nasa_main_page():
                     save_meta_data(data, data['id'])
                     save_img(data['id'])
     print('Parsing complete.')
-    driver.close()
+    client.terminate(client)
 
 
 parse_nasa_main_page()
